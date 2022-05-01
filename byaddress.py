@@ -1,4 +1,3 @@
-from operator import pos
 from bs4 import BeautifulSoup
 import requests
 import csv
@@ -41,7 +40,7 @@ def listAddress(address_file):
     # list to hold the data from the address file
     address_list = []
     
-    # opens the .csv file and reads the data to address_dict 
+    # opens the .csv file and reads the data to address_list 
     with open(address_file, 'r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         for row in csv_reader:
@@ -50,43 +49,68 @@ def listAddress(address_file):
     return address_list
 
 def payload_list(a_list):
-    '''formats the key:value in the give list'''
+    '''formats the dictionary keys to be acceptable for posting.'''
     post_keys = ['companyName','address1', 'city', 'state', 'zip']
     post_values = list(a_list.values())
     
     post_payload = {}
-    for i in range(len(post_keys)):
+    for i in range(len(post_keys)):                
         post_payload[post_keys[i]]= post_values[i]
-
+    
     return post_payload
 
-def saveResults(address_File, address_list):
-    ''' Writes a csv file, with additional column of "valid" '''
+def validate_address(csv_file, url_to_post):
+    '''Valdiates the address adn returns a list of dictionaries,
+    with the additional validation column.'''
 
-    row = address_list
-
-    with open(address_File, 'w') as csv_mod_file:
-        fieldnames = ['Company', 'Street', 'City', 'St', 'ZIPCode', 'AddressStatus']
-        csv_writer = csv.DictWriter(csv_mod_file, fieldnames=fieldnames)
-
-        csv_writer.writeheader()
-        for i in range(len(address_dict)):
-            if resultsStatus == 'SUCCESS':
-                csv_writer.writerow({'Company': f'{row[i]["Company"]}', 'Street': f'{row[i]["Street"]}', 'City': f'{row[i]["City"]}', 'St': f'{row[i]["St"]}', 'ZIPCode': f'{row[i]["ZIPCode"]}', 'AddressStatus':'Valid' })
-            else:
-                csv_writer.writerow({'Company': f'{row[i]["Company"]}', 'Street': f'{row[i]["Street"]}', 'City': f'{row[i]["City"]}', 'St': f'{row[i]["St"]}', 'ZIPCode': f'{row[i]["ZIPCode"]}', 'AddressStatus':'Not Valid' })
-
-    return row
-
-if __name__ == '__main__':
-    list_Of_Original_Addresses = listAddress(csv_original_file)
+    list_Of_Original_Addresses = listAddress(csv_file)
+   
     payload_data = []
+
     for i in range(len(list_Of_Original_Addresses)):
         payload_data.append(payload_list(list_Of_Original_Addresses[i]))
     
     for i in range(len(payload_data)):
-        address_search = post_soup(post_url, payload_data[i])
+        address_search = post_soup(url_to_post, payload_data[i])
         if valid_address_pattern.search(address_search):
             print(f"Address for {payload_data[i]['companyName']} is Valid")
+            payload_data[i].update({'addressStatus':'Valid'})
         else:
             print(f"Address for {payload_data[i]['companyName']} is Not Valid")
+            payload_data[i].update({'addressStatus':'Not Valid'})
+    
+    return payload_data
+
+def validated_list(validated_list):
+    '''formats the dictionary keys of a validated list to the original values'''
+    post_keys = ['Company', 'Street', 'City', 'St', 'ZIPCode', 'AddressStatus']
+    for i in range(len(validated_list)):
+        post_values = list(validated_list.values())
+    
+    post_payload = {}
+    for i in range(len(post_keys)):                
+        post_payload[post_keys[i]]= post_values[i]
+    
+    return post_payload
+
+def saveResults(csv_address_File, address_list):
+    ''' Writes a csv file, with additional column of "valid" '''
+
+    row = address_list
+
+    #post_values = list(address_list.values())
+
+    post_payload = {}
+
+    with open(csv_address_File, 'w') as csv_mod_file:
+        fieldnames = ['Company', 'Street', 'City', 'St', 'ZIPCode', 'AddressStatus']
+        
+        csv_writer = csv.DictWriter(csv_mod_file, fieldnames=fieldnames)
+
+        csv_writer.writeheader()
+        for i in range(len(row)):
+            csv_writer.writerow({'Company': f'{row[i]["companyName"]}', 'Street': f'{row[i]["address1"]}', 'City': f'{row[i]["city"]}', 'St': f'{row[i]["state"]}', 'ZIPCode': f'{row[i]["zip"]}', 'AddressStatus': f'{row[i]["addressStatus"]}'})
+
+if __name__ == '__main__':
+    val_list = validate_address(csv_original_file, post_url)
+    saveResults(csv_modified_file, val_list)
