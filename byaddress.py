@@ -15,7 +15,7 @@ headers = {
 csv_original_file = 'Python Quiz Input - Sheet1.csv'
 
 # modified csv file to be used for testing 
-csv_modified_file = 'Python Quiz Input - Sheet1_Modified.csv'
+# csv_modified_file = 'Python Quiz Input - Sheet1_Modified.csv'
 
 # used to search for a 'success' result from scraping output
 valid_address_pattern = re.compile("SUCCESS")
@@ -99,10 +99,13 @@ def saveResults(csv_address_File, address_list):
 
             csv_writer.writerow(write_to_row)
 
-if __name__ == '__main__':
+def main():
     list_of_addresses = listAddress(csv_original_file)
 
     val_list = validate_address(list_of_addresses, post_url)
     
-    # modified file can be switched with original file;
-    saveResults(csv_modified_file, val_list)
+    saveResults(csv_original_file, val_list)
+
+if __name__ == '__main__':
+    main()
+    
