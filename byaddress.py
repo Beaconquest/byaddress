@@ -11,6 +11,9 @@ headers = {
     'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36',
 }
 
+class AddressFinder:
+    pass
+
 # original csv file 
 csv_original_file = 'Python Quiz Input - Sheet1.csv'
 
@@ -27,7 +30,7 @@ def post_soup(url, data):
     results = soup.find('p')
     return results.text
 
-def listAddress(csv_address_file):
+def get_list_of_addresses(csv_file):
     '''reads a csv file and iterates to a list with a 
     dictionary of address data. '''
     
@@ -35,14 +38,14 @@ def listAddress(csv_address_file):
     address_list = []
     
     # opens the .csv file and reads the data to address_list 
-    with open(csv_address_file, 'r') as csv_file:
-        csv_reader = csv.DictReader(csv_file)
+    with open(csv_file, 'r') as f:
+        csv_reader = csv.DictReader(f)
         for row in csv_reader:
             address_list.append(row)
     
     return address_list
 
-def payload_list(a_list):
+def get_payload(a_list):
     '''formats the dictionary keys to be accepted for posting.'''
 
     # list of keys to be used as the accepted post key data
@@ -57,14 +60,14 @@ def payload_list(a_list):
     
     return post_payload
 
-def validate_address(csv_file, url_to_post):
+def validate_address(list_address_dict, url_to_post):
     '''Valdiates the address and returns a list of the address dictionaries,
     with the additional validation column.'''
 
     validated_data = []
 
-    for i in range(len(csv_file)):
-        validated_data.append(payload_list(csv_file[i]))
+    for i in range(len(list_address_dict)):
+        validated_data.append(get_payload(list_address_dict[i]))
     
     for i in range(len(validated_data)):
         address_search = post_soup(url_to_post, validated_data[i])
@@ -100,7 +103,7 @@ def saveResults(csv_address_File, address_list):
             csv_writer.writerow(write_to_row)
 
 def main():
-    list_of_addresses = listAddress(csv_original_file)
+    list_of_addresses = get_list_of_addresses(csv_original_file)
 
     val_list = validate_address(list_of_addresses, post_url)
     
